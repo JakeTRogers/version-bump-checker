@@ -1,0 +1,36 @@
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-json
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [ --markdown-linebreak-ext=md ]
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: a6564f5d57444e123433a5c9af733e3975c77229  # frozen: v0.11.0.1-1
+    hooks:
+      - id: shellcheck
+  - repo: https://github.com/rhysd/actionlint
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca  # frozen: v1.7.12
+    hooks:
+      - id: actionlint
+  - repo: local
+    hooks:
+      - id: script-tests
+        name: script tests
+        entry: bash --noprofile --norc -eo pipefail tests/run.sh
+        language: system
+        pass_filenames: false
+        files: ^(check\.sh|cz_helper\.py|action\.yml|tests/)
+        stages: [pre-commit]
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: 12a0e5b23a0f849f1977df7128985e163de11274  # frozen: v4.20.1
+    hooks:
+      - id: commitizen
+        stages:
+          - commit-msg
