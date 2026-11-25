@@ -1,0 +1,93 @@
+name: Version Bump Checker
+description: >-
+  Fail a pull request whose commits call for a release (Conventional Commits) when the
+  project version didn't increase compared with the base branch.
+author: JakeTRogers
+
+inputs:
+  base-sha:
+    description: Base commit of the comparison.
+    default: ${{ github.event.pull_request.base.sha }}
+  head-sha:
+    description: Head commit of the comparison.
+    default: ${{ github.event.pull_request.head.sha }}
+  version-file:
+    description: >-
+      Regex mode: file holding the version. Leave empty for Commitizen mode, which reads the
+      version with `cz version --project` and applies the repository's Commitizen bump rules.
+    default: ""
+  version-pattern:
+    description: >-
+      Regex mode: PCRE (`grep -P`) that must match the version in version-file exactly once;
+      use `\K` to drop a prefix.
+    default: ""
+  bump-pattern:
+    description: >-
+      Regex mode: ERE checked against every line of each commit message. Defaults to the
+      cz_conventional_commits bump rules.
+    default: ""
+  commitizen-version:
+    description: Commitizen version to run (4.17.0 or later). Defaults to the version pinned in check.sh.
+    default: ""
+  enforce-increment:
+    description: >-
+      Commitizen mode: also fail when the bump is smaller than the commits require
+      (e.g. PATCH for a feat). Defaults to true.
+    default: ""
+  check-consistency:
+    description: >-
+      Commitizen mode: also fail when a version_files entry doesn't contain the head version.
+      Defaults to true.
+    default: ""
+  check-commits:
+    description: Also validate the commit messages with `cz check`. Defaults to false.
+    default: ""
+
+outputs:
+  mode:
+    description: "`commitizen` or `regex`."
+    value: ${{ steps.check.outputs.mode }}
+  bump-required:
+    description: "`true` when the commits call for a version bump."
+    value: ${{ steps.check.outputs.bump-required }}
+  increment:
+    description: >-
+      Commitizen mode: increment the unreleased commits (since the base version's tag) require
+      (`NONE`, `PATCH`, `MINOR` or `MAJOR`).
+    value: ${{ steps.check.outputs.increment }}
+  base-version:
+    description: Version in the base commit (empty when there was nothing to compare).
+    value: ${{ steps.check.outputs.base-version }}
+  head-version:
+    description: Version in the head commit (empty when there was nothing to compare).
+    value: ${{ steps.check.outputs.head-version }}
+  expected-version:
+    description: >-
+      Commitizen mode: version the increment leads to from the base version; the head
+      version's core must reach it (set when a bump is required).
+    value: ${{ steps.check.outputs.expected-version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv
+      if: inputs.version-file == '' || inputs.check-commits == 'true'
+      uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
+      with:
+        version: 0.13.10
+        enable-cache: false
+
+    - name: Check version bump
+      id: check
+      shell: bash
+      env:
+        BASE_SHA: ${{ inputs.base-sha }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        VERSION_FILE: ${{ inputs.version-file }}
+        VERSION_PATTERN: ${{ inputs.version-pattern }}
+        BUMP_PATTERN: ${{ inputs.bump-pattern }}
+        COMMITIZEN_VERSION: ${{ inputs.commitizen-version }}
+        ENFORCE_INCREMENT: ${{ inputs.enforce-increment }}
+        CHECK_CONSISTENCY: ${{ inputs.check-consistency }}
+        CHECK_COMMITS: ${{ inputs.check-commits }}
+      run: '"$GITHUB_ACTION_PATH/check.sh"'
