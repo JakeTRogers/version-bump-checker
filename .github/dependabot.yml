@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "monthly"
+    allow:
+      - dependency-name: "*astral-sh/uv"
+      - dependency-name: "devcontainers/base"
+    commit-message:
+      prefix: "build(deps)"
+    cooldown:
+      default-days: 10
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "ci(actions)"
+    cooldown:
+      default-days: 10
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "ci(hooks)"
+    cooldown:
+      default-days: 10
